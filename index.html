@@ -3,40 +3,40 @@
 <head>
   <title>Hotel Check-In System</title>
   <style>
-    * {box-sizing: border-box;}
-    body {font-family: Arial, sans-serif; max-width: 1200px; margin: 20px auto; padding: 10px;}
-    h2 {text-align: center;}
-    nav {margin-bottom: 15px;}
-    nav button {padding: 10px 20px; margin-right: 5px; border: none; background: #ddd; font-weight: bold; cursor: pointer;}
-    nav button.active {background: #4CAF50; color: white;}
-    section {display: none;}
-    section.active {display: block;}
-    label {font-weight: bold; display: block; margin: 10px 0 5px;}
-    input, select {width: 100%; padding: 7px; margin-top: 2px;}
-    button[type=submit] {margin-top: 15px; background: #4CAF50; color: white; border: none; padding: 10px; font-weight: bold; cursor: pointer;}
-    button[type=submit]:hover {background: #45a049;}
-    table {width: 100%; border-collapse: collapse; overflow-x: auto;}
-    th, td {border: 1px solid #ccc; padding: 8px 10px; text-align: left; white-space: nowrap;}
-    th {background: #f4f4f4;}
-    td input[type="text"], td input[type="number"] { width: 100px; box-sizing: border-box; padding: 2px 4px;}
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; max-width: 1200px; margin: 20px auto; padding: 10px; }
+    h2 { text-align: center; }
+    nav { margin-bottom: 15px; }
+    nav button { padding: 10px 20px; margin-right: 5px; border: none; background: #ddd; font-weight: bold; cursor: pointer; }
+    nav button.active { background: #4CAF50; color: white; }
+    section { display: none; }
+    section.active { display: block; }
+    label { font-weight: bold; display: block; margin: 10px 0 5px; }
+    input, select { width: 100%; padding: 7px; margin-top: 2px; }
+    button[type=submit] { margin-top: 15px; background: #4CAF50; color: white; border: none; padding: 10px; font-weight: bold; cursor: pointer; }
+    button[type=submit]:hover { background: #45a049; }
+    table { width: 100%; border-collapse: collapse; overflow-x: auto; }
+    th, td { border: 1px solid #ccc; padding: 8px 10px; text-align: left; white-space: nowrap; }
+    th { background: #f4f4f4; }
+    td input[type="text"], td input[type="number"] { width: 100px; box-sizing: border-box; padding: 2px 4px; }
     @media (max-width: 768px) {
-      table, thead, tbody, th, td, tr {display: block;}
-      thead tr {display: none;}
-      td {position: relative; padding-left: 50%; white-space: normal;}
-      td:before {position: absolute; top: 8px; left: 8px; width: 45%; padding-right: 10px; white-space: nowrap; font-weight: bold; content: attr(data-label);}
+      table, thead, tbody, th, td, tr { display: block; }
+      thead tr { display: none; }
+      td { position: relative; padding-left: 50%; white-space: normal; }
+      td:before { position: absolute; top: 8px; left: 8px; width: 45%; padding-right: 10px; white-space: nowrap; font-weight: bold; content: attr(data-label); }
     }
-    #searchInput {width: 100%; padding: 7px; margin-bottom: 10px;}
-    #exportBtn, #exportPdfBtn {background: #2196F3; color: white; border: none; padding: 8px 15px; margin-bottom: 10px; cursor: pointer; font-weight: bold; margin-right: 10px;}
-    #exportPdfBtn {background: #9C27B0;}
+    #searchInput { width: 100%; padding: 7px; margin-bottom: 10px; }
+    #exportBtn, #exportPdfBtn { background: #2196F3; color: white; border: none; padding: 8px 15px; margin-bottom: 10px; cursor: pointer; font-weight: bold; margin-right: 10px; }
+    #exportPdfBtn { background: #9C27B0; }
     #summaryModal, #paymentModal {
       display:none; position:fixed; top:20%; left:50%; transform: translate(-50%, -20%);
       background:#fff; border:1px solid #ccc; padding:20px; z-index:1000; max-width:420px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.3);
     }
-    #overlay {display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999;}
-    #summaryModal button, #paymentModal button {margin-top: 15px; background:#4CAF50; color:#fff; border:none; padding: 7px 15px; cursor:pointer; font-weight:bold;}
-    #paymentModal input[type=number] {width: 80px;}
-    #paymentModal label {margin-bottom:6px;}
+    #overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999; }
+    #summaryModal button, #paymentModal button { margin-top: 15px; background:#4CAF50; color:#fff; border:none; padding:7px 15px; cursor:pointer; font-weight:bold; }
+    #paymentModal input[type=number] { width: 80px; }
+    #paymentModal label { margin-bottom:6px; }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -102,9 +102,8 @@
   <table id="inHouseTable" aria-label="Guests currently checked in">
     <thead>
       <tr>
-        <th>Check-In Number</th><th>Name</th><th>Phone</th><th>Room Number</th><th>Check In</th><th>Check Out</th><th>Vehicle Number</th>
-        <th>Rent</th><th>Pick Up</th><th>Drop</th><th>Sightseeing</th><th>Advance Paid</th><th>Extras</th><th>Balance</th>
-        <th>Edit Payment</th>
+        <th>Check-In Number</th><th>Name</th><th>Room Number</th><th>Check In</th><th>Check Out</th><th>Plan</th><th>Number of Person</th>
+        <th>Rent</th><th>Pick Up</th><th>Drop</th><th>Sightseeing</th><th>Extras</th><th>Balance</th><th>Edit Payment</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -118,11 +117,9 @@
   <table id="recordsTable" aria-label="All Check-in Records">
     <thead>
       <tr>
-        <th>Check-In Number</th><th>Name</th><th>Phone</th><th>Street</th><th>City</th><th>Pincode</th>
-        <th>Check In</th><th>Check Out</th><th>Adults</th><th>Children</th><th>Plan</th>
-        <th>#Rooms</th><th>Room Numbers</th><th>Coming From</th><th>Going To</th><th>Vehicle Number</th>
-        <th>Rent</th><th>Pick Up</th><th>Drop</th><th>Sightseeing</th><th>Advance Paid</th><th>Extras</th><th>Balance</th>
-        <th>Actions</th>
+        <th>Check-In Number</th><th>Name</th><th>Street</th><th>City</th><th>Pincode</th><th>Check In</th><th>Check Out</th>
+        <th>Adults</th><th>Children</th><th>Plan</th><th>#Rooms</th><th>Room Numbers</th><th>Coming From</th><th>Going To</th><th>Vehicle Number</th>
+        <th>Rent</th><th>Pick Up</th><th>Drop</th><th>Sightseeing</th><th>Advance Paid</th><th>Extras</th><th>Balance</th><th>Actions</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -215,7 +212,7 @@ document.getElementById('checkinForm').addEventListener('submit', e => {
     if (!dateStr) return '';
     let parts = dateStr.split('-');
     if (parts.length === 3) {
-      return parts[2] + '-' + parts[1] + '-' + parts[0];
+      return parts[2] + '-' + parts + '-' + parts;
     }
     return dateStr;
   }
@@ -273,7 +270,7 @@ async function loadRecords() {
       tdCheckInNumber.appendChild(inputCheckInNumber);
       tr.appendChild(tdCheckInNumber);
 
-      ['Name','Phone','Street','City','Pincode','CheckInDate','CheckOutDate','Adults','Children','Plan',
+      ['Name','Street','City','Pincode','CheckInDate','CheckOutDate','Adults','Children','Plan',
        'NumRooms','RoomNumbers','ComingFrom','GoingTo','VehicleNumber',
        'Rent','PickUp','Drop','Sightseeing','AdvancePaid','Extras','Balance'].forEach(field => {
          const td = document.createElement('td');
@@ -360,12 +357,12 @@ async function loadInHouseGuests() {
     filtered.forEach(rec => {
       const tr = document.createElement('tr');
 
-      ['CheckInNumber','Name','Phone','RoomNumbers','CheckInDate','CheckOutDate',
-       'VehicleNumber','Rent','PickUp','Drop','Sightseeing','AdvancePaid','Extras','Balance']
-       .forEach(field => {
-         const td = document.createElement('td');
-         td.textContent = rec[field] || '';
-         tr.appendChild(td);
+      const fields = ['CheckInNumber','Name','RoomNumbers','CheckInDate','CheckOutDate','Plan','Adults',
+                      'Rent','PickUp','Drop','Sightseeing','Extras','Balance'];
+      fields.forEach(field => {
+        const td = document.createElement('td');
+        td.textContent = rec[field] || '';
+        tr.appendChild(td);
       });
 
       const tdEdit = document.createElement('td');
@@ -385,7 +382,7 @@ async function loadInHouseGuests() {
 
 function updateRecord(row) {
   const tds = row.querySelectorAll('td:not(:last-child)');
-  const fields = ['CheckInNumber','Name','Phone','Street','City','Pincode','CheckInDate','CheckOutDate','Adults','Children',
+  const fields = ['CheckInNumber','Name','Street','City','Pincode','CheckInDate','CheckOutDate','Adults','Children',
                   'Plan','NumRooms','RoomNumbers','ComingFrom','GoingTo','VehicleNumber','Rent','PickUp','Drop','Sightseeing',
                   'AdvancePaid','Extras','Balance'];
   let record = {rowIndex: row.rowIndexValue};
@@ -432,7 +429,7 @@ document.getElementById('exportPdfBtn').addEventListener('click', () => {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
   doc.text("Hotel Check-in Records", 14, 20);
-  doc.autoTable({ 
+  doc.autoTable({
     html: '#recordsTable',
     startY: 30,
     styles: { fontSize: 8 },
@@ -545,11 +542,11 @@ document.getElementById('paymentForm').addEventListener('submit', function(evt) 
     }).catch(() => alert('Unable to update payment.'));
 });
 
-// Helper to parse DD-MM-YYYY string to Date object
+// Parse DD-MM-YYYY to Date object helper
 function parseDDMMYYYYtoDate(str) {
   if(!str) return null;
   const parts = str.split('-');
-  if(parts.length === 3) return new Date(parts[2], parts[1] - 1, parts[0]);
+  if(parts.length === 3) return new Date(parts[2], parts - 1, parts);
   return null;
 }
 
