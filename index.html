@@ -3,6 +3,7 @@
 <head>
   <title>Hotel Check-In System</title>
   <style>
+    /* Include your existing CSS styles from before */
     * {box-sizing: border-box;}
     body {font-family: Arial, sans-serif; max-width: 1200px; margin: 20px auto; padding: 10px;}
     h2 {text-align: center;}
@@ -104,7 +105,8 @@
   <table id="recordsTable" aria-label="All Check-in Records">
     <thead>
       <tr>
-        <th>Check-In Number</th><th>Name</th><th>Phone</th><th>Street</th><th>City</th><th>Pincode</th>
+        <th>Check-In Number</th>
+        <th>Name</th><th>Phone</th><th>Street</th><th>City</th><th>Pincode</th>
         <th>Check In</th><th>Check Out</th><th>Adults</th><th>Children</th><th>Plan</th>
         <th>#Rooms</th><th>Room Numbers</th><th>Coming From</th><th>Going To</th><th>Vehicle Number</th>
         <th>Rent</th><th>Pick Up</th><th>Drop</th><th>Sightseeing</th><th>Advance Paid</th><th>Extras</th><th>Balance</th>
@@ -129,7 +131,6 @@
   </table>
 </section>
 
-<!-- Summary and Payment Modals -->
 <div id="summaryModal">
   <h3>Payment Summary</h3>
   <div id="summaryContent"></div>
@@ -153,7 +154,7 @@
 <div id="overlay"></div>
 
 <script>
-const googleScriptUrl = 'YOUR_GOOGLE_APPS_SCRIPT_DEPLOY_URL'; // Replace with your real deployed Apps Script URL
+const googleScriptUrl = 'https://script.google.com/macros/s/AKfycbyLeVSXnayeDltxqvFbiQto9TsTDnV_U8HHbP_6UPjn9Naa1oX2lVxuMs2JwPjRnbmi/exec';
 
 const tabForm = document.getElementById('tabForm');
 const tabRecords = document.getElementById('tabRecords');
@@ -442,7 +443,6 @@ function exportTableToCSV(filename) {
   link.click();
 }
 
-// Summary Modal
 function showSummary(rec) {
   const contentDiv = document.getElementById('summaryContent');
   contentDiv.innerHTML = `
