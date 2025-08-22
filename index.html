@@ -46,9 +46,9 @@
 <h2>Hotel Check-In System</h2>
 
 <nav>
-  <button id="tabForm" class="active">Check In Form</button>
-  <button id="tabRecords">All Records</button>
+  <button id="tabForm" class="active">Check In</button>
   <button id="tabInHouse">In House Guests</button>
+  <button id="tabRecords">All Records</button>
 </nav>
 
 <section id="formSection" class="active">
@@ -97,25 +97,6 @@
   </form>
 </section>
 
-<section id="recordsSection">
-  <input type="text" id="searchInput" placeholder="Search by Name, Room Number, Check-in Number or Date" />
-  <button id="exportBtn">Export CSV</button>
-  <button id="exportPdfBtn">Export PDF</button>
-  <table id="recordsTable" aria-label="All Check-in Records">
-    <thead>
-      <tr>
-        <th>Check-In Number</th>
-        <th>Name</th><th>Phone</th><th>Street</th><th>City</th><th>Pincode</th>
-        <th>Check In</th><th>Check Out</th><th>Adults</th><th>Children</th><th>Plan</th>
-        <th>#Rooms</th><th>Room Numbers</th><th>Coming From</th><th>Going To</th><th>Vehicle Number</th>
-        <th>Rent</th><th>Pick Up</th><th>Drop</th><th>Sightseeing</th><th>Advance Paid</th><th>Extras</th><th>Balance</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</section>
-
 <section id="inHouseSection">
   <h3>In House Guests</h3>
   <table id="inHouseTable" aria-label="Guests currently checked in">
@@ -124,6 +105,24 @@
         <th>Check-In Number</th><th>Name</th><th>Phone</th><th>Room Number</th><th>Check In</th><th>Check Out</th><th>Vehicle Number</th>
         <th>Rent</th><th>Pick Up</th><th>Drop</th><th>Sightseeing</th><th>Advance Paid</th><th>Extras</th><th>Balance</th>
         <th>Edit Payment</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<section id="recordsSection">
+  <input type="text" id="searchInput" placeholder="Search by Name, Room Number, Check-in Number or Date" />
+  <button id="exportBtn">Export CSV</button>
+  <button id="exportPdfBtn">Export PDF</button>
+  <table id="recordsTable" aria-label="All Check-in Records">
+    <thead>
+      <tr>
+        <th>Check-In Number</th><th>Name</th><th>Phone</th><th>Street</th><th>City</th><th>Pincode</th>
+        <th>Check In</th><th>Check Out</th><th>Adults</th><th>Children</th><th>Plan</th>
+        <th>#Rooms</th><th>Room Numbers</th><th>Coming From</th><th>Going To</th><th>Vehicle Number</th>
+        <th>Rent</th><th>Pick Up</th><th>Drop</th><th>Sightseeing</th><th>Advance Paid</th><th>Extras</th><th>Balance</th>
+        <th>Actions</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -210,12 +209,13 @@ window.onload = () => {
 document.getElementById('checkinForm').addEventListener('submit', e => {
   e.preventDefault();
   const data = Object.fromEntries(new FormData(e.target));
-  // Convert dates to DD-MM-YYYY before sending
+
+  // Convert yyyy-mm-dd date to dd-mm-yyyy
   function convertDateToDDMMYYYY(dateStr) {
-    if(!dateStr) return '';
+    if (!dateStr) return '';
     let parts = dateStr.split('-');
-    if(parts.length === 3) {
-      return parts[2] + '-' + parts + '-' + parts;
+    if (parts.length === 3) {
+      return parts[2] + '-' + parts[1] + '-' + parts[0];
     }
     return dateStr;
   }
@@ -234,19 +234,18 @@ document.getElementById('checkinForm').addEventListener('submit', e => {
       } else {
         alert('Failed to add record.');
       }
-    })
-    .catch(() => alert('Error submitting data.'));
+    }).catch(() => alert('Error submitting data.'));
 });
 
 async function loadRecords() {
   const tbody = document.querySelector('#recordsTable tbody');
   tbody.innerHTML = '<tr><td colspan="24">Loading...</td></tr>';
   try {
-    const res = await fetch(googleScriptUrl);
-    const records = await res.json();
-    const searchVal = document.getElementById('searchInput').value.trim().toLowerCase();
+    const response = await fetch(googleScriptUrl);
+    const records = await response.json();
     let filtered = records;
-    if(searchVal) {
+    const searchVal = document.getElementById('searchInput').value.trim().toLowerCase();
+    if(searchVal){
       filtered = records.filter(r =>
         (r.Name && r.Name.toLowerCase().includes(searchVal)) ||
         (r.RoomNumbers && r.RoomNumbers.toLowerCase().includes(searchVal)) ||
@@ -255,59 +254,62 @@ async function loadRecords() {
         (r.CheckInNumber && r.CheckInNumber.toLowerCase().includes(searchVal))
       );
     }
+
     if(filtered.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="24">No records found</td></tr>`;
+      tbody.innerHTML = '<tr><td colspan="24">No records found</td></tr>';
       return;
     }
+
     tbody.innerHTML = '';
     filtered.forEach(rec => {
       const tr = document.createElement('tr');
 
-      const numberTd = document.createElement('td');
-      const numberInput = document.createElement('input');
-      numberInput.type = 'text';
-      numberInput.value = rec.CheckInNumber || '';
-      numberInput.style.width = '100px';
-      numberInput.onchange = () => updateCheckInNumber(rec, numberInput.value);
-      numberTd.appendChild(numberInput);
-      tr.appendChild(numberTd);
+      const tdCheckInNumber = document.createElement('td');
+      const inputCheckInNumber = document.createElement('input');
+      inputCheckInNumber.type = 'text';
+      inputCheckInNumber.value = rec.CheckInNumber || '';
+      inputCheckInNumber.style.width = '100px';
+      inputCheckInNumber.onchange = () => updateCheckInNumber(rec, inputCheckInNumber.value);
+      tdCheckInNumber.appendChild(inputCheckInNumber);
+      tr.appendChild(tdCheckInNumber);
 
       ['Name','Phone','Street','City','Pincode','CheckInDate','CheckOutDate','Adults','Children','Plan',
        'NumRooms','RoomNumbers','ComingFrom','GoingTo','VehicleNumber',
        'Rent','PickUp','Drop','Sightseeing','AdvancePaid','Extras','Balance'].forEach(field => {
-        const td = document.createElement('td');
-        td.textContent = rec[field] || '';
-        tr.appendChild(td);
+         const td = document.createElement('td');
+         td.textContent = rec[field] || '';
+         tr.appendChild(td);
       });
 
-      const actionTd = document.createElement('td');
-      const saveBtn = document.createElement('button');
-      saveBtn.textContent = 'Save';
-      saveBtn.onclick = () => updateRecord(tr);
-      const deleteBtn = document.createElement('button');
-      deleteBtn.textContent = 'Delete';
-      deleteBtn.style.marginLeft = '4px';
-      deleteBtn.onclick = () => deleteRecord(tr, rec.rowIndex);
-      const summaryBtn = document.createElement('button');
-      summaryBtn.textContent = 'Summary';
-      summaryBtn.style.marginLeft = '4px';
-      summaryBtn.onclick = () => showSummary(rec);
-      actionTd.appendChild(saveBtn);
-      actionTd.appendChild(deleteBtn);
-      actionTd.appendChild(summaryBtn);
-      tr.appendChild(actionTd);
+      const tdActions = document.createElement('td');
+      const btnSave = document.createElement('button');
+      btnSave.textContent = 'Save';
+      btnSave.onclick = () => updateRecord(tr);
+      const btnDelete = document.createElement('button');
+      btnDelete.style.marginLeft = '5px';
+      btnDelete.textContent = 'Delete';
+      btnDelete.onclick = () => deleteRecord(tr, rec.rowIndex);
+      const btnSummary = document.createElement('button');
+      btnSummary.style.marginLeft = '5px';
+      btnSummary.textContent = 'Summary';
+      btnSummary.onclick = () => showSummary(rec);
+
+      tdActions.appendChild(btnSave);
+      tdActions.appendChild(btnDelete);
+      tdActions.appendChild(btnSummary);
+      tr.appendChild(tdActions);
 
       tr.rowIndexValue = rec.rowIndex;
       tbody.appendChild(tr);
     });
   } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="24">Error loading records</td></tr>`;
+    tbody.innerHTML = '<tr><td colspan="24">Error loading records</td></tr>';
   }
 }
 
 function updateCheckInNumber(rec, newNumber) {
   if(!newNumber) return;
-  if(newNumber === rec.CheckInNumber) return; 
+  if(newNumber === rec.CheckInNumber) return;
 
   fetch(googleScriptUrl).then(r => r.json()).then(records => {
     if(records.some(r => r.CheckInNumber === newNumber && r.rowIndex !== rec.rowIndex)){
@@ -336,64 +338,71 @@ async function loadInHouseGuests() {
   const tbody = document.querySelector('#inHouseTable tbody');
   tbody.innerHTML = '<tr><td colspan="15">Loading...</td></tr>';
   try {
-    const res = await fetch(googleScriptUrl);
-    const records = await res.json();
+    const response = await fetch(googleScriptUrl);
+    const records = await response.json();
     const today = new Date();
     tbody.innerHTML = '';
+
     const filtered = records.filter(rec => {
-      if(!rec.CheckInDate || !rec.CheckOutDate) return false;
-      const checkIn = parseDateDDMMYYYYtoDate(rec.CheckInDate);
-      const checkOut = parseDateDDMMYYYYtoDate(rec.CheckOutDate);
-      return today >= checkIn && today <= checkOut;
+      if (!rec.CheckInDate || !rec.CheckOutDate) return false;
+      const checkIn = parseDDMMYYYYtoDate(rec.CheckInDate);
+      const checkOut = parseDDMMYYYYtoDate(rec.CheckOutDate);
+      if(!checkIn || !checkOut) return false;
+      checkOut.setHours(12,0,0,0);
+      return today >= checkIn && today < checkOut;
     });
+
     if(filtered.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="15">No in house guests found</td></tr>`;
+      tbody.innerHTML = '<tr><td colspan="15">No in house guests found</td></tr>';
       return;
     }
+
     filtered.forEach(rec => {
       const tr = document.createElement('tr');
 
-      const fields = ['CheckInNumber','Name','Phone','RoomNumbers','CheckInDate','CheckOutDate',
-                      'VehicleNumber','Rent','PickUp','Drop','Sightseeing','AdvancePaid','Extras','Balance'];
-      fields.forEach(field => {
-        const td = document.createElement('td');
-        td.textContent = rec[field] || '';
-        tr.appendChild(td);
+      ['CheckInNumber','Name','Phone','RoomNumbers','CheckInDate','CheckOutDate',
+       'VehicleNumber','Rent','PickUp','Drop','Sightseeing','AdvancePaid','Extras','Balance']
+       .forEach(field => {
+         const td = document.createElement('td');
+         td.textContent = rec[field] || '';
+         tr.appendChild(td);
       });
 
-      const editTd = document.createElement('td');
-      const editBtn = document.createElement('button');
-      editBtn.textContent = 'Edit Payment';
-      editBtn.onclick = () => openPaymentModal(rec);
-      editTd.appendChild(editBtn);
-      tr.appendChild(editTd);
+      const tdEdit = document.createElement('td');
+      const btnEditPayment = document.createElement('button');
+      btnEditPayment.textContent = 'Edit Payment';
+      btnEditPayment.onclick = () => openPaymentModal(rec);
+      tdEdit.appendChild(btnEditPayment);
+      tr.appendChild(tdEdit);
 
       tbody.appendChild(tr);
     });
+
   } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="15">Error loading in house guests</td></tr>`;
+    tbody.innerHTML = '<tr><td colspan="15">Error loading in house guests</td></tr>';
   }
 }
 
 function updateRecord(row) {
-  const inputs = row.querySelectorAll('td:not(:last-child)');
+  const tds = row.querySelectorAll('td:not(:last-child)');
   const fields = ['CheckInNumber','Name','Phone','Street','City','Pincode','CheckInDate','CheckOutDate','Adults','Children',
                   'Plan','NumRooms','RoomNumbers','ComingFrom','GoingTo','VehicleNumber','Rent','PickUp','Drop','Sightseeing',
                   'AdvancePaid','Extras','Balance'];
   let record = {rowIndex: row.rowIndexValue};
   fields.forEach((field, idx) => {
-    if(idx === 0) {
+    if(idx === 0){
       const input = row.cells[0].querySelector('input');
       record[field] = input ? input.value.trim() : '';
     } else {
-      record[field] = inputs[idx].textContent.trim();
+      record[field] = tds[idx].textContent.trim();
     }
   });
+
   fetch(googleScriptUrl, {
     method: 'POST',
     body: JSON.stringify({action: 'edit', record: record})
-  }).then(res=>res.json())
-  .then(res=>{
+  }).then(r => r.json())
+  .then(res => {
     if(res.result === 'success') alert('Record updated');
     else alert('Update failed: ' + (res.message || 'Unknown error'));
     loadRecords();
@@ -402,14 +411,15 @@ function updateRecord(row) {
 
 function deleteRecord(row, rowIndex) {
   if(!confirm('Are you sure you want to delete this record?')) return;
+
   fetch(googleScriptUrl, {
     method: 'POST',
     body: JSON.stringify({action: 'delete', record: {rowIndex: rowIndex}})
-  }).then(res => res.json())
-    .then(res => {
-      if (res.result === 'success') loadRecords();
-      else alert('Delete failed');
-    }).catch(() => alert('Delete error'));
+  }).then(r => r.json())
+  .then(res => {
+    if(res.result === 'success') loadRecords();
+    else alert('Delete failed');
+  }).catch(() => alert('Delete error'));
 }
 
 document.getElementById('searchInput').addEventListener('input', loadRecords);
@@ -470,7 +480,6 @@ function showSummary(rec) {
   overlay.style.display = 'block';
   overlay.onclick = closeSummary;
 }
-
 function closeSummary() {
   document.getElementById('summaryModal').style.display = 'none';
   overlay.style.display = 'none';
@@ -506,25 +515,25 @@ function closePayment() {
 
 document.getElementById('paymentForm').addEventListener('submit', function(evt) {
   evt.preventDefault();
-  const data = Object.fromEntries(new FormData(evt.target));
-  data.rowIndex = Number(data.rowIndex);
+  const formData = Object.fromEntries(new FormData(evt.target));
+  formData.rowIndex = Number(formData.rowIndex);
 
   const sendData = Object.assign({}, currentRecForPaymentEdit, {
-    Rent: data.Rent,
-    PickUp: data.PickUp,
-    Drop: data.Drop,
-    Sightseeing: data.Sightseeing,
-    Extras: data.Extras,
-    AdvancePaid: data.AdvancePaid,
-    CheckInNumber: data.CheckInNumber,
-    rowIndex: data.rowIndex
+    Rent: formData.Rent,
+    PickUp: formData.PickUp,
+    Drop: formData.Drop,
+    Sightseeing: formData.Sightseeing,
+    Extras: formData.Extras,
+    AdvancePaid: formData.AdvancePaid,
+    CheckInNumber: formData.CheckInNumber,
+    rowIndex: formData.rowIndex
   });
 
   fetch(googleScriptUrl, {
     method: 'POST',
     body: JSON.stringify({action:'edit', record: sendData})
-  }).then(res=>res.json())
-    .then(res=>{
+  }).then(res => res.json())
+    .then(res => {
       if(res.result === 'success') {
         closePayment();
         alert('Payment details updated!');
@@ -533,13 +542,15 @@ document.getElementById('paymentForm').addEventListener('submit', function(evt) 
       } else {
         alert('Failed to update payment: ' + (res.message || 'Unknown error'));
       }
-    }).catch(()=>alert('Unable to update payment.'));
+    }).catch(() => alert('Unable to update payment.'));
 });
 
-function parseDateDDMMYYYYtoDate(s) {
-  if(!s) return null;
-  const [d,m,y] = s.split('-');
-  return new Date(parseInt(y,10), parseInt(m,10)-1, parseInt(d,10));
+// Helper to parse DD-MM-YYYY string to Date object
+function parseDDMMYYYYtoDate(str) {
+  if(!str) return null;
+  const parts = str.split('-');
+  if(parts.length === 3) return new Date(parts[2], parts[1] - 1, parts[0]);
+  return null;
 }
 
 setActiveTab('form');
