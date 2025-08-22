@@ -18,11 +18,7 @@
     table {width: 100%; border-collapse: collapse; overflow-x: auto;}
     th, td {border: 1px solid #ccc; padding: 8px 10px; text-align: left; white-space: nowrap;}
     th {background: #f4f4f4;}
-    td input[type="text"], td input[type="number"] {
-      width: 100px;
-      box-sizing: border-box;
-      padding: 2px 4px;
-    }
+    td input[type="text"], td input[type="number"] { width: 100px; box-sizing: border-box; padding: 2px 4px;}
     @media (max-width: 768px) {
       table, thead, tbody, th, td, tr {display: block;}
       thead tr {display: none;}
@@ -157,7 +153,7 @@
 <div id="overlay"></div>
 
 <script>
-const googleScriptUrl = 'https://script.google.com/macros/s/AKfycbyLeVSXnayeDltxqvFbiQto9TsTDnV_U8HHbP_6UPjn9Naa1oX2lVxuMs2JwPjRnbmi/exec';
+const googleScriptUrl = 'YOUR_GOOGLE_APPS_SCRIPT_DEPLOY_URL'; // Replace with your real deployed Apps Script URL
 
 const tabForm = document.getElementById('tabForm');
 const tabRecords = document.getElementById('tabRecords');
@@ -255,7 +251,6 @@ async function loadRecords() {
     filtered.forEach(rec => {
       const tr = document.createElement('tr');
 
-      // Editable CheckInNumber in a text input for inline edit
       const numberTd = document.createElement('td');
       const numberInput = document.createElement('input');
       numberInput.type = 'text';
@@ -302,14 +297,12 @@ function updateCheckInNumber(rec, newNumber) {
   if(!newNumber) return;
   if(newNumber === rec.CheckInNumber) return; 
 
-  // Check duplicate number by fetching all records then check
   fetch(googleScriptUrl).then(r => r.json()).then(records => {
     if(records.some(r => r.CheckInNumber === newNumber && r.rowIndex !== rec.rowIndex)){
       alert('This Check-In Number already exists. Please use a unique number.');
-      loadRecords(); // Reload to reset input value
+      loadRecords();
       return;
     }
-    // Update the CheckInNumber in backend
     var updatedRec = Object.assign({}, rec, {CheckInNumber: newNumber});
     fetch(googleScriptUrl, {
       method: 'POST',
@@ -356,7 +349,6 @@ async function loadInHouseGuests() {
         tr.appendChild(td);
       });
 
-      // Add Edit Payment button
       const editTd = document.createElement('td');
       const editBtn = document.createElement('button');
       editBtn.textContent = 'Edit Payment';
@@ -379,7 +371,6 @@ function updateRecord(row) {
   let record = {rowIndex: row.rowIndexValue};
   fields.forEach((field, idx) => {
     if(idx === 0) {
-      // CheckInNumber is editable input in first td
       const input = row.cells[0].querySelector('input');
       record[field] = input ? input.value.trim() : '';
     } else {
@@ -474,7 +465,6 @@ function closeSummary() {
   overlay.onclick = null;
 }
 
-// Edit Payment Modal logic
 let currentRecForPaymentEdit = null;
 
 function openPaymentModal(rec) {
@@ -507,7 +497,6 @@ document.getElementById('paymentForm').addEventListener('submit', function(evt) 
   const data = Object.fromEntries(new FormData(evt.target));
   data.rowIndex = Number(data.rowIndex);
 
-  // Merge edited payment & CheckInNumber fields into full object
   const sendData = Object.assign({}, currentRecForPaymentEdit, {
     Rent: data.Rent,
     PickUp: data.PickUp,
