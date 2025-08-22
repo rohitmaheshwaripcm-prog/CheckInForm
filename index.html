@@ -18,6 +18,11 @@
     table {width: 100%; border-collapse: collapse; overflow-x: auto;}
     th, td {border: 1px solid #ccc; padding: 8px 10px; text-align: left; white-space: nowrap;}
     th {background: #f4f4f4;}
+    td input[type="text"], td input[type="number"] {
+      width: 100px;
+      box-sizing: border-box;
+      padding: 2px 4px;
+    }
     @media (max-width: 768px) {
       table, thead, tbody, th, td, tr {display: block;}
       thead tr {display: none;}
@@ -29,7 +34,7 @@
     #exportPdfBtn {background: #9C27B0;}
     #summaryModal, #paymentModal {
       display:none; position:fixed; top:20%; left:50%; transform: translate(-50%, -20%);
-      background:#fff; border:1px solid #ccc; padding:20px; z-index:1000; max-width:400px;
+      background:#fff; border:1px solid #ccc; padding:20px; z-index:1000; max-width:420px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.3);
     }
     #overlay {display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999;}
@@ -97,13 +102,13 @@
 </section>
 
 <section id="recordsSection">
-  <input type="text" id="searchInput" placeholder="Search by Name, Room Number, or Date" />
+  <input type="text" id="searchInput" placeholder="Search by Name, Room Number, Check-in Number or Date" />
   <button id="exportBtn">Export CSV</button>
   <button id="exportPdfBtn">Export PDF</button>
   <table id="recordsTable" aria-label="All Check-in Records">
     <thead>
       <tr>
-        <th>Name</th><th>Phone</th><th>Street</th><th>City</th><th>Pincode</th>
+        <th>Check-In Number</th><th>Name</th><th>Phone</th><th>Street</th><th>City</th><th>Pincode</th>
         <th>Check In</th><th>Check Out</th><th>Adults</th><th>Children</th><th>Plan</th>
         <th>#Rooms</th><th>Room Numbers</th><th>Coming From</th><th>Going To</th><th>Vehicle Number</th>
         <th>Rent</th><th>Pick Up</th><th>Drop</th><th>Sightseeing</th><th>Advance Paid</th><th>Extras</th><th>Balance</th>
@@ -119,7 +124,7 @@
   <table id="inHouseTable" aria-label="Guests currently checked in">
     <thead>
       <tr>
-        <th>Name</th><th>Phone</th><th>Room Number</th><th>Check In</th><th>Check Out</th><th>Vehicle Number</th>
+        <th>Check-In Number</th><th>Name</th><th>Phone</th><th>Room Number</th><th>Check In</th><th>Check Out</th><th>Vehicle Number</th>
         <th>Rent</th><th>Pick Up</th><th>Drop</th><th>Sightseeing</th><th>Advance Paid</th><th>Extras</th><th>Balance</th>
         <th>Edit Payment</th>
       </tr>
@@ -143,6 +148,7 @@
     <label>Sightseeing: <input type="number" name="Sightseeing" min="0" step="0.01"></label>
     <label>Extras: <input type="number" name="Extras" min="0" step="0.01"></label>
     <label>Advance Paid: <input type="number" name="AdvancePaid" min="0" step="0.01"></label>
+    <label>Check-In Number: <input type="text" name="CheckInNumber" required></label>
     <input type="hidden" name="rowIndex">
     <button type="submit">Save</button>
     <button type="button" onclick="closePayment()">Cancel</button>
@@ -189,7 +195,7 @@ tabForm.onclick = () => setActiveTab('form');
 tabRecords.onclick = () => setActiveTab('records');
 tabInHouse.onclick = () => setActiveTab('inHouse');
 
-window.onload = function() {
+window.onload = () => {
   const checkInInput = document.getElementById('checkInDate');
   const checkOutInput = document.getElementById('checkOutDate');
   const todayStr = new Date().toISOString().substr(0, 10);
@@ -214,19 +220,19 @@ document.getElementById('checkinForm').addEventListener('submit', e => {
   }).then(res => res.json())
     .then(res => {
       if(res.result === 'success') {
-        alert('Record added successfully');
+        alert('Record added successfully! Check-In Number: ' + res.checkInNumber);
         e.target.reset();
         setActiveTab('records');
       } else {
-        alert('Failed to add record');
+        alert('Failed to add record.');
       }
     })
-    .catch(() => alert('Error submitting data'));
+    .catch(() => alert('Error submitting data.'));
 });
 
 async function loadRecords() {
   const tbody = document.querySelector('#recordsTable tbody');
-  tbody.innerHTML = '<tr><td colspan="23">Loading...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="24">Loading...</td></tr>';
   try {
     const res = await fetch(googleScriptUrl);
     const records = await res.json();
@@ -237,23 +243,36 @@ async function loadRecords() {
         (r.Name && r.Name.toLowerCase().includes(searchVal)) ||
         (r.RoomNumbers && r.RoomNumbers.toLowerCase().includes(searchVal)) ||
         (r.CheckInDate && r.CheckInDate.toLowerCase().includes(searchVal)) ||
-        (r.CheckOutDate && r.CheckOutDate.toLowerCase().includes(searchVal))
+        (r.CheckOutDate && r.CheckOutDate.toLowerCase().includes(searchVal)) ||
+        (r.CheckInNumber && r.CheckInNumber.toLowerCase().includes(searchVal))
       );
     }
     if(filtered.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="23">No records found</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="24">No records found</td></tr>`;
       return;
     }
     tbody.innerHTML = '';
     filtered.forEach(rec => {
       const tr = document.createElement('tr');
+
+      // Editable CheckInNumber in a text input for inline edit
+      const numberTd = document.createElement('td');
+      const numberInput = document.createElement('input');
+      numberInput.type = 'text';
+      numberInput.value = rec.CheckInNumber || '';
+      numberInput.style.width = '100px';
+      numberInput.onchange = () => updateCheckInNumber(rec, numberInput.value);
+      numberTd.appendChild(numberInput);
+      tr.appendChild(numberTd);
+
       ['Name','Phone','Street','City','Pincode','CheckInDate','CheckOutDate','Adults','Children','Plan',
-      'NumRooms','RoomNumbers','ComingFrom','GoingTo','VehicleNumber',
-      'Rent','PickUp','Drop','Sightseeing','AdvancePaid','Extras','Balance'].forEach(field => {
+       'NumRooms','RoomNumbers','ComingFrom','GoingTo','VehicleNumber',
+       'Rent','PickUp','Drop','Sightseeing','AdvancePaid','Extras','Balance'].forEach(field => {
         const td = document.createElement('td');
         td.textContent = rec[field] || '';
         tr.appendChild(td);
       });
+
       const actionTd = document.createElement('td');
       const saveBtn = document.createElement('button');
       saveBtn.textContent = 'Save';
@@ -270,20 +289,47 @@ async function loadRecords() {
       actionTd.appendChild(deleteBtn);
       actionTd.appendChild(summaryBtn);
       tr.appendChild(actionTd);
+
       tr.rowIndexValue = rec.rowIndex;
       tbody.appendChild(tr);
     });
   } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="23">Error loading records</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="24">Error loading records</td></tr>`;
   }
 }
 
-// For modal state
-let currentRecForPaymentEdit = null;
+function updateCheckInNumber(rec, newNumber) {
+  if(!newNumber) return;
+  if(newNumber === rec.CheckInNumber) return; 
+
+  // Check duplicate number by fetching all records then check
+  fetch(googleScriptUrl).then(r => r.json()).then(records => {
+    if(records.some(r => r.CheckInNumber === newNumber && r.rowIndex !== rec.rowIndex)){
+      alert('This Check-In Number already exists. Please use a unique number.');
+      loadRecords(); // Reload to reset input value
+      return;
+    }
+    // Update the CheckInNumber in backend
+    var updatedRec = Object.assign({}, rec, {CheckInNumber: newNumber});
+    fetch(googleScriptUrl, {
+      method: 'POST',
+      body: JSON.stringify({action: 'edit', record: updatedRec})
+    }).then(r => r.json())
+      .then(res => {
+        if(res.result === 'success'){
+          alert('Check-In Number updated.');
+          loadRecords();
+        } else {
+          alert('Failed to update Check-In Number: ' + res.message);
+          loadRecords();
+        }
+      }).catch(() => alert('Error updating Check-In Number.'));
+  });
+}
 
 async function loadInHouseGuests() {
   const tbody = document.querySelector('#inHouseTable tbody');
-  tbody.innerHTML = '<tr><td colspan="14">Loading...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="15">Loading...</td></tr>';
   try {
     const res = await fetch(googleScriptUrl);
     const records = await res.json();
@@ -296,17 +342,20 @@ async function loadInHouseGuests() {
       return today >= checkIn && today <= checkOut;
     });
     if(filtered.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="14">No in house guests found</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="15">No in house guests found</td></tr>`;
       return;
     }
     filtered.forEach(rec => {
       const tr = document.createElement('tr');
-      ['Name','Phone','RoomNumbers','CheckInDate','CheckOutDate','VehicleNumber',
-      'Rent','PickUp','Drop','Sightseeing','AdvancePaid','Extras','Balance'].forEach(field => {
+
+      const fields = ['CheckInNumber','Name','Phone','RoomNumbers','CheckInDate','CheckOutDate',
+                      'VehicleNumber','Rent','PickUp','Drop','Sightseeing','AdvancePaid','Extras','Balance'];
+      fields.forEach(field => {
         const td = document.createElement('td');
         td.textContent = rec[field] || '';
         tr.appendChild(td);
       });
+
       // Add Edit Payment button
       const editTd = document.createElement('td');
       const editBtn = document.createElement('button');
@@ -314,21 +363,28 @@ async function loadInHouseGuests() {
       editBtn.onclick = () => openPaymentModal(rec);
       editTd.appendChild(editBtn);
       tr.appendChild(editTd);
+
       tbody.appendChild(tr);
     });
   } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="14">Error loading in house guests</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="15">Error loading in house guests</td></tr>`;
   }
 }
 
 function updateRecord(row) {
   const inputs = row.querySelectorAll('td:not(:last-child)');
-  const fields = ['Name','Phone','Street','City','Pincode','CheckInDate','CheckOutDate','Adults','Children',
-    'Plan','NumRooms','RoomNumbers','ComingFrom','GoingTo','VehicleNumber',
-    'Rent','PickUp','Drop','Sightseeing','AdvancePaid','Extras','Balance'];
+  const fields = ['CheckInNumber','Name','Phone','Street','City','Pincode','CheckInDate','CheckOutDate','Adults','Children',
+                  'Plan','NumRooms','RoomNumbers','ComingFrom','GoingTo','VehicleNumber','Rent','PickUp','Drop','Sightseeing',
+                  'AdvancePaid','Extras','Balance'];
   let record = {rowIndex: row.rowIndexValue};
   fields.forEach((field, idx) => {
-    record[field] = inputs[idx].textContent.trim();
+    if(idx === 0) {
+      // CheckInNumber is editable input in first td
+      const input = row.cells[0].querySelector('input');
+      record[field] = input ? input.value.trim() : '';
+    } else {
+      record[field] = inputs[idx].textContent.trim();
+    }
   });
   fetch(googleScriptUrl, {
     method: 'POST',
@@ -336,7 +392,8 @@ function updateRecord(row) {
   }).then(res=>res.json())
   .then(res=>{
     if(res.result === 'success') alert('Record updated');
-    else alert('Update failed');
+    else alert('Update failed: ' + (res.message || 'Unknown error'));
+    loadRecords();
   }).catch(() => alert('Update error'));
 }
 
@@ -418,30 +475,39 @@ function closeSummary() {
 }
 
 // Edit Payment Modal logic
+let currentRecForPaymentEdit = null;
+
 function openPaymentModal(rec) {
   currentRecForPaymentEdit = rec;
   const paymentModal = document.getElementById('paymentModal');
   const paymentForm = document.getElementById('paymentForm');
+
   paymentForm.elements['Rent'].value = rec.Rent || '';
   paymentForm.elements['PickUp'].value = rec.PickUp || '';
   paymentForm.elements['Drop'].value = rec.Drop || '';
   paymentForm.elements['Sightseeing'].value = rec.Sightseeing || '';
   paymentForm.elements['Extras'].value = rec.Extras || '';
   paymentForm.elements['AdvancePaid'].value = rec.AdvancePaid || '';
+  paymentForm.elements['CheckInNumber'].value = rec.CheckInNumber || '';
   paymentForm.elements['rowIndex'].value = rec.rowIndex;
+
   paymentModal.style.display = 'block';
   overlay.style.display = 'block';
   overlay.onclick = closePayment;
 }
+
 function closePayment() {
   document.getElementById('paymentModal').style.display = 'none';
   overlay.style.display = 'none';
   overlay.onclick = null;
 }
+
 document.getElementById('paymentForm').addEventListener('submit', function(evt) {
   evt.preventDefault();
   const data = Object.fromEntries(new FormData(evt.target));
   data.rowIndex = Number(data.rowIndex);
+
+  // Merge edited payment & CheckInNumber fields into full object
   const sendData = Object.assign({}, currentRecForPaymentEdit, {
     Rent: data.Rent,
     PickUp: data.PickUp,
@@ -449,19 +515,22 @@ document.getElementById('paymentForm').addEventListener('submit', function(evt) 
     Sightseeing: data.Sightseeing,
     Extras: data.Extras,
     AdvancePaid: data.AdvancePaid,
+    CheckInNumber: data.CheckInNumber,
     rowIndex: data.rowIndex
   });
+
   fetch(googleScriptUrl, {
     method: 'POST',
     body: JSON.stringify({action:'edit', record: sendData})
   }).then(res=>res.json())
     .then(res=>{
-      if(res.result==='success') {
+      if(res.result === 'success') {
         closePayment();
         alert('Payment details updated!');
         loadInHouseGuests();
+        loadRecords();
       } else {
-        alert('Failed to update payment');
+        alert('Failed to update payment: ' + (res.message || 'Unknown error'));
       }
     }).catch(()=>alert('Unable to update payment.'));
 });
