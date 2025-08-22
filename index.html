@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Hotel Check-In System</title>
+  <style>
+    * {box-sizing: border-box;}
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 10px;
+    }
+    h2 {
+      text-align: center;
+    }
+    nav {
+      margin-bottom: 15px;
+    }
+    nav button {
+      padding: 10px 20px;
+      margin-right: 5px;
+      border: none;
+      background: #ddd;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    nav button.active {
+      background: #4CAF50;
+      color: white;
+    }
+    section {
+      display: none;
+    }
+    section.active {
+      display: block;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin: 10px 0 5px;
+    }
+    input, select {
+      width: 100%;
+      padding: 7px;
+      margin-top: 2px;
+    }
+    button[type=submit] {
+      margin-top: 15px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button[type=submit]:hover {
+      background: #45a049;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow-x: auto;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px 10px;
+      text-align: left;
+      white-space: nowrap;
+    }
+    th {
+      background: #f4f4f4;
+    }
+    @media (max-width: 768px) {
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+      thead tr {
+        display: none;
+      }
+      td {
+        position: relative;
+        padding-left: 50%;
+        white-space: normal;
+      }
+      td:before {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap;
+        font-weight: bold;
+        content: attr(data-label);
+      }
+    }
+    #searchInput {
+      width: 100%;
+      padding: 7px;
+      margin-bottom: 10px;
+    }
+    #exportBtn, #exportPdfBtn {
+      background: #2196F3;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-right: 10px;
+    }
+    #exportPdfBtn {
+      background: #9C27B0;
+    }
+    /* Summary Modal */
+    #summaryModal {
+      display:none; 
+      position:fixed; 
+      top:20%; 
+      left:50%; 
+      transform: translate(-50%, -20%); 
+      background:#fff; 
+      border:1px solid #ccc; 
+      padding:20px; 
+      z-index:1000;
+      max-width:400px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+    #overlay {
+      display:none; 
+      position:fixed; 
+      top:0; 
+      left:0; 
+      width:100%; 
+      height:100%; 
+      background:rgba(0,0,0,0.5); 
+      z-index:999;
+    }
+    #summaryModal button {
+      margin-top: 15px;
+      background:#4CAF50;
+      color:#fff;
+      border:none;
+      padding: 7px 15px;
+      cursor:pointer;
+      font-weight:bold;
+    }
+  </style>
+  <!-- jsPDF for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+
+<h2>Hotel Check-In System</h2>
+
+<nav>
+  <button id="tabForm" class="active">Check In Form</button>
+  <button id="tabRecords">All Records</button>
+  <button id="tabInHouse">In House Guests</button>
+</nav>
+
+<section id="formSection" class="active">
+  <form id="checkinForm">
+    <label for="name">Name *</label>
+    <input type="text" id="name" name="Name" required />
+    <label for="phone">Phone Number *</label>
+    <input type="tel" id="phone" name="Phone" required />
+    <label for="street">Street *</label>
+    <input type="text" id="street" name="Street" required />
+    <label for="city">City *</label>
+    <input type="text" id="city" name="City" required />
+    <label for="pincode">Pincode *</label>
+    <input type="text" id="pincode" name="Pincode" required />
+
+    <label for="checkInDate">Check In Date *</label>
+    <input type="date" id="checkInDate" name="CheckInDate" required />
+    <label for="checkOutDate">Check Out Date *</label>
+    <input type="date" id="checkOutDate" name="CheckOutDate" required />
+
+    <label for="adults">Adults *</label>
+    <input type="number" id="adults" name="Adults" min="0" required />
+    <label for="children">Children *</label>
+    <input type="number" id="children" name="Children" min="0" required />
+
+    <label for="plan">Plan *</label>
+    <select id="plan" name="Plan" required>
+      <option value="">Select</option>
+      <option value="Room Only">Room Only</option>
+      <option value="Breakfast Included">Breakfast Included</option>
+      <option value="Half Board">Half Board</option>
+      <option value="Full Board">Full Board</option>
+    </select>
+
+    <label for="numRooms">Number of Rooms *</label>
+    <input type="number" id="numRooms" name="NumRooms" min="1" required />
+    <label for="roomNumbers">Room Numbers *</label>
+    <input type="text" id="roomNumbers" name="RoomNumbers" placeholder="Comma separated" required />
+    <label for="comingFrom">Coming From *</label>
+    <input type="text" id="comingFrom" name="ComingFrom" required />
+    <label for="goingTo">Going To *</label>
+    <input type="text" id="goingTo" name="GoingTo" required />
+    <label for="vehicleNumber">Vehicle Number</label>
+    <input type="text" id="vehicleNumber" name="VehicleNumber" />
+    <button type="submit">Check In</button>
+  </form>
+</section>
+
+<section id="recordsSection">
+  <input type="text" id="searchInput" placeholder="Search by Name, Room Number, or Date" />
+  <button id="exportBtn">Export CSV</button>
+  <button id="exportPdfBtn">Export PDF</button>
+  <table id="recordsTable" aria-label="All Check-in Records">
+    <thead>
+      <tr>
+        <th>Name</th><th>Phone</th><th>Street</th><th>City</th><th>Pincode</th>
+        <th>Check In</th><th>Check Out</th><th>Adults</th><th>Children</th><th>Plan</th>
+        <th>#Rooms</th><th>Room Numbers</th><th>Coming From</th><th>Going To</th><th>Vehicle Number</th>
+        <th>Rent</th><th>Pick Up</th><th>Drop</th><th>Sightseeing</th><th>Advance Paid</th><th>Extras</th><th>Balance</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<section id="inHouseSection">
+  <h3>In House Guests</h3>
+  <table id="inHouseTable" aria-label="Guests currently checked in">
+    <thead>
+      <tr>
+        <th>Name</th><th>Phone</th><th>Room Number</th><th>Check In</th><th>Check Out</th><th>Vehicle Number</th>
+        <th>Rent</th><th>Pick Up</th><th>Drop</th><th>Sightseeing</th><th>Advance Paid</th><th>Extras</th><th>Balance</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<div id="summaryModal">
+  <h3>Payment Summary</h3>
+  <div id="summaryContent"></div>
+  <button onclick="closeSummary()">Close</button>
+</div>
+<div id="overlay"></div>
+
+<script>
+  const tabForm = document.getElementById('tabForm');
+  const tabRecords = document.getElementById('tabRecords');
+  const tabInHouse = document.getElementById('tabInHouse');
+  const formSection = document.getElementById('formSection');
+  const recordsSection = document.getElementById('recordsSection');
+  const inHouseSection = document.getElementById('inHouseSection');
+
+  const googleScriptUrl = 'https://script.google.com/macros/s/AKfycbyLeVSXnayeDltxqvFbiQto9TsTDnV_U8HHbP_6UPjn9Naa1oX2lVxuMs2JwPjRnbmi/exec';
+
+  function setActiveTab(tab) {
+    tabForm.classList.remove('active');
+    tabRecords.classList.remove('active');
+    tabInHouse.classList.remove('active');
+    formSection.classList.remove('active');
+    recordsSection.classList.remove('active');
+    inHouseSection.classList.remove('active');
+
+    if(tab === 'form') {
+      tabForm.classList.add('active');
+      formSection.classList.add('active');
+    } else if(tab === 'records') {
+      tabRecords.classList.add('active');
+      recordsSection.classList.add('active');
+      loadRecords();
+    } else if(tab === 'inHouse') {
+      tabInHouse.classList.add('active');
+      inHouseSection.classList.add('active');
+      loadInHouseGuests();
+    }
+  }
+
+  tabForm.onclick = () => setActiveTab('form');
+  tabRecords.onclick = () => setActiveTab('records');
+  tabInHouse.onclick = () => setActiveTab('inHouse');
+
+  window.onload = function() {
+    const checkInInput = document.getElementById('checkInDate');
+    const checkOutInput = document.getElementById('checkOutDate');
+    const todayStr = new Date().toISOString().substr(0, 10);
+    if(!checkInInput.value) checkInInput.value = todayStr;
+    if(checkInInput.value) {
+      checkOutInput.min = checkInInput.value;
+    }
+    checkInInput.addEventListener('change', () => {
+      checkOutInput.min = checkInInput.value;
+      if(checkOutInput.value < checkInInput.value) {
+        checkOutInput.value = checkInInput.value;
+      }
+    });
+  };
+
+  document.getElementById('checkinForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(e.target));
+    fetch(googleScriptUrl, {
+      method: 'POST',
+      body: JSON.stringify({action: 'add', record: data})
+    }).then(res => res.json())
+      .then(res => {
+        if(res.result === 'success') {
+          alert('Record added successfully');
+          e.target.reset();
+          setActiveTab('records');
+        } else {
+          alert('Failed to add record');
+        }
+      })
+      .catch(() => alert('Error submitting data'));
+  });
+
+  async function loadRecords() {
+    const tbody = document.querySelector('#recordsTable tbody');
+    tbody.innerHTML = '<tr><td colspan="23">Loading...</td></tr>';
+    try {
+      const res = await fetch(googleScriptUrl);
+      const records = await res.json();
+      const searchVal = document.getElementById('searchInput').value.trim().toLowerCase();
+      let filtered = records;
+      if(searchVal) {
+        filtered = records.filter(r =>
+          (r.Name && r.Name.toLowerCase().includes(searchVal)) ||
+          (r.RoomNumbers && r.RoomNumbers.toLowerCase().includes(searchVal)) ||
+          (r.CheckInDate && r.CheckInDate.toLowerCase().includes(searchVal)) ||
+          (r.CheckOutDate && r.CheckOutDate.toLowerCase().includes(searchVal))
+        );
+      }
+      if(filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="23">No records found</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = '';
+      filtered.forEach(rec => {
+        const tr = document.createElement('tr');
+        ['Name','Phone','Street','City','Pincode','CheckInDate','CheckOutDate','Adults','Children','Plan',
+         'NumRooms','RoomNumbers','ComingFrom','GoingTo','VehicleNumber',
+         'Rent','PickUp','Drop','Sightseeing','AdvancePaid','Extras','Balance'].forEach(field => {
+          const td = document.createElement('td');
+          td.textContent = rec[field] || '';
+          tr.appendChild(td);
+        });
+
+        const actionTd = document.createElement('td');
+
+        const saveBtn = document.createElement('button');
+        saveBtn.textContent = 'Save';
+        saveBtn.onclick = () => updateRecord(tr);
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.style.marginLeft = '4px';
+        deleteBtn.onclick = () => deleteRecord(tr, rec.rowIndex);
+
+        const summaryBtn = document.createElement('button');
+        summaryBtn.textContent = 'Summary';
+        summaryBtn.style.marginLeft = '4px';
+        summaryBtn.onclick = () => showSummary(rec);
+
+        actionTd.appendChild(saveBtn);
+        actionTd.appendChild(deleteBtn);
+        actionTd.appendChild(summaryBtn);
+        tr.appendChild(actionTd);
+
+        tr.rowIndexValue = rec.rowIndex;
+        tbody.appendChild(tr);
+      });
+    } catch(e) {
+      tbody.innerHTML = `<tr><td colspan="23">Error loading records</td></tr>`;
+    }
+  }
+
+  async function loadInHouseGuests() {
+    const tbody = document.querySelector('#inHouseTable tbody');
+    tbody.innerHTML = '<tr><td colspan="13">Loading...</td></tr>';
+    try {
+      const res = await fetch(googleScriptUrl);
+      const records = await res.json();
+      const today = new Date();
+      tbody.innerHTML = '';
+      const filtered = records.filter(rec => {
+        if(!rec.CheckInDate || !rec.CheckOutDate) return false;
+        const checkIn = new Date(rec.CheckInDate);
+        const checkOut = new Date(rec.CheckOutDate);
+        return today >= checkIn && today <= checkOut;
+      });
+      if(filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="13">No in house guests found</td></tr>`;
+        return;
+      }
+      filtered.forEach(rec => {
+        const tr = document.createElement('tr');
+        ['Name','Phone','RoomNumbers','CheckInDate','CheckOutDate','VehicleNumber',
+         'Rent','PickUp','Drop','Sightseeing','AdvancePaid','Extras','Balance'].forEach(field => {
+          const td = document.createElement('td');
+          td.textContent = rec[field] || '';
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+    } catch(e) {
+      tbody.innerHTML = `<tr><td colspan="13">Error loading in house guests</td></tr>`;
+    }
+  }
+
+  function updateRecord(row) {
+    const inputs = row.querySelectorAll('td:not(:last-child)');
+    const fields = ['Name','Phone','Street','City','Pincode','CheckInDate','CheckOutDate','Adults','Children',
+                    'Plan','NumRooms','RoomNumbers','ComingFrom','GoingTo','VehicleNumber',
+                    'Rent','PickUp','Drop','Sightseeing','AdvancePaid','Extras','Balance'];
+    let record = {rowIndex: row.rowIndexValue};
+    fields.forEach((field, idx) => {
+      record[field] = inputs[idx].textContent.trim();
+    });
+    fetch(googleScriptUrl, {
+      method: 'POST',
+      body: JSON.stringify({action: 'edit', record: record})
+    }).then(res=>res.json())
+    .then(res=>{
+      if(res.result === 'success') alert('Record updated');
+      else alert('Update failed');
+    }).catch(() => alert('Update error'));
+  }
+
+  function deleteRecord(row, rowIndex) {
+    if(!confirm('Are you sure you want to delete this record?')) return;
+    fetch(googleScriptUrl, {
+      method: 'POST',
+      body: JSON.stringify({action: 'delete', record: {rowIndex: rowIndex}})
+    }).then(res => res.json())
+      .then(res => {
+        if (res.result === 'success') loadRecords();
+        else alert('Delete failed');
+      }).catch(() => alert('Delete error'));
+  }
+
+  document.getElementById('searchInput').addEventListener('input', loadRecords);
+
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    exportTableToCSV('hotel_checkin_records.csv');
+  });
+
+  document.getElementById('exportPdfBtn').addEventListener('click', () => {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.text("Hotel Check-in Records", 14, 20);
+    doc.autoTable({ 
+      html: '#recordsTable',
+      startY: 30,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [41, 128, 185] }
+    });
+    doc.save('hotel_checkin_records.pdf');
+  });
+
+  function exportTableToCSV(filename) {
+    const rows = document.querySelectorAll('#recordsTable tr');
+    let csv = [];
+    rows.forEach(row => {
+      let cols = row.querySelectorAll('th, td');
+      let data = [];
+      cols.forEach(col => {
+        let value = col.innerText.replace(/"/g, '""');
+        if(value.search(/("|,|\n)/g) >= 0) {
+          value = `"${value}"`;
+        }
+        data.push(value);
+      });
+      csv.push(data.join(','));
+    });
+    const csvString = csv.join('\n');
+    const blob = new Blob([csvString], {type: 'text/csv'});
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+  }
+
+  function showSummary(rec) {
+    const contentDiv = document.getElementById('summaryContent');
+    const overlay = document.getElementById('overlay');
+    contentDiv.innerHTML = `
+      <p><strong>Name:</strong> ${rec.Name || ''}</p>
+      <p><strong>Rent (per day):</strong> ${rec.Rent || '0'}</p>
+      <p><strong>Pick Up:</strong> ${rec.PickUp || '0'}</p>
+      <p><strong>Drop:</strong> ${rec.Drop || '0'}</p>
+      <p><strong>Sightseeing:</strong> ${rec.Sightseeing || '0'}</p>
+      <p><strong>Extras:</strong> ${rec.Extras || '0'}</p>
+      <p><strong>Advance Paid:</strong> ${rec.AdvancePaid || '0'}</p>
+      <p><strong>Balance:</strong> ${rec.Balance || '0'}</p>
+    `;
+    document.getElementById('summaryModal').style.display = 'block';
+    overlay.style.display = 'block';
+    overlay.onclick = closeSummary;
+  }
+
+  function closeSummary() {
+    document.getElementById('summaryModal').style.display = 'none';
+    document.getElementById('overlay').style.display = 'none';
+  }
+
+  setActiveTab('form');
+</script>
+
+</body>
+</html>
