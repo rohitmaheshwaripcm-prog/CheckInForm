@@ -3,7 +3,6 @@
 <head>
   <title>Hotel Check-In System</title>
   <style>
-    /* Include your existing CSS styles from before */
     * {box-sizing: border-box;}
     body {font-family: Arial, sans-serif; max-width: 1200px; margin: 20px auto; padding: 10px;}
     h2 {text-align: center;}
@@ -211,6 +210,18 @@ window.onload = () => {
 document.getElementById('checkinForm').addEventListener('submit', e => {
   e.preventDefault();
   const data = Object.fromEntries(new FormData(e.target));
+  // Convert dates to DD-MM-YYYY before sending
+  function convertDateToDDMMYYYY(dateStr) {
+    if(!dateStr) return '';
+    let parts = dateStr.split('-');
+    if(parts.length === 3) {
+      return parts[2] + '-' + parts + '-' + parts;
+    }
+    return dateStr;
+  }
+  data.CheckInDate = convertDateToDDMMYYYY(data.CheckInDate);
+  data.CheckOutDate = convertDateToDDMMYYYY(data.CheckOutDate);
+
   fetch(googleScriptUrl, {
     method: 'POST',
     body: JSON.stringify({action: 'add', record: data})
@@ -331,8 +342,8 @@ async function loadInHouseGuests() {
     tbody.innerHTML = '';
     const filtered = records.filter(rec => {
       if(!rec.CheckInDate || !rec.CheckOutDate) return false;
-      const checkIn = new Date(rec.CheckInDate);
-      const checkOut = new Date(rec.CheckOutDate);
+      const checkIn = parseDateDDMMYYYYtoDate(rec.CheckInDate);
+      const checkOut = parseDateDDMMYYYYtoDate(rec.CheckOutDate);
       return today >= checkIn && today <= checkOut;
     });
     if(filtered.length === 0) {
@@ -459,6 +470,7 @@ function showSummary(rec) {
   overlay.style.display = 'block';
   overlay.onclick = closeSummary;
 }
+
 function closeSummary() {
   document.getElementById('summaryModal').style.display = 'none';
   overlay.style.display = 'none';
@@ -523,6 +535,12 @@ document.getElementById('paymentForm').addEventListener('submit', function(evt) 
       }
     }).catch(()=>alert('Unable to update payment.'));
 });
+
+function parseDateDDMMYYYYtoDate(s) {
+  if(!s) return null;
+  const [d,m,y] = s.split('-');
+  return new Date(parseInt(y,10), parseInt(m,10)-1, parseInt(d,10));
+}
 
 setActiveTab('form');
 </script>
